@@ -87,6 +87,7 @@
     observer.disconnect();
     try {
       for (var i = 0; i < pending.length; i++) walk(pending[i]);
+      stampBuild();
     } finally {
       pending.length = 0;
       observer.observe(document.body, OPTS);
@@ -141,6 +142,8 @@
           .map(function (k) { return { text: k, seen: seen[k] }; });
       }
     };
+
+    window.addEventListener("load", function () { stampBuild(); walk(document.body); });
 
     console.log("[NEKO_TL] active -", keys.length, "entries. NEKO_TL.missing() to find gaps.");
   }
