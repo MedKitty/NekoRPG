@@ -8,6 +8,11 @@
 // longer name always beats a shorter substring of it.
 // Run NEKO_TL.missing() in the console to list what is still untranslated.
 
+// Build number shown on the version button (e.g. V3.32b.1).
+// Bump this every time you push, so you can see at a glance whether
+// GitHub Pages has actually served your latest commit.
+window.NEKO_BUILD = "1";
+
 window.NEKO_DICT = {
   "警告：反应堆温度达到9999°C时会熔毁,摧毁其中的一切.": "WARNING: the reactor melts down at 9999°C, destroying everything inside.",
   "一处明亮整洁的大厅，纳可平时活动的地方。": "A bright, tidy hall where Neko spends most of her time.",
@@ -227,7 +232,6 @@ window.NEKO_DICT = {
   "舰船除草机B1": "Ship Weeder B1",
   "质子粉碎机B1": "Proton Crusher B1",
   "饱食 VIII": "Satiated VIII",
-  "V3.32b": "V3.32b.1",
   "一捆高能凝胶": "Bundle of High-Energy Gel",
   "万象天引B1": "Ten Thousand Phenomena Celestial Lure B1",
   "人立电法茸茸": "Upright Lightning Mage Fluffy",

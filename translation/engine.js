@@ -27,6 +27,14 @@
   }).join("|"), "g");
 
   var CJK = /[\u4e00-\u9fff]/;
+
+  // The Chinese fast-reject below skips any text node with no CJK, which would
+  // silently ignore ASCII dictionary keys. Keep a second pattern for those so
+  // the fast path stays cheap without losing them.
+  var asciiKeys = keys.filter(function (k) { return !CJK.test(k); });
+  var ASCII_RE = asciiKeys.length ? new RegExp(asciiKeys.map(function (k) {
+    return k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }).join("|")) : null;
   var SKIP_TAGS = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, NOSCRIPT: 1 };
 
   // display.js:1101 does parseInt on .item_count innerText to read stack sizes.
@@ -51,7 +59,9 @@
 
   function translateNode(n) {
     var t = n.nodeValue;
-    if (!t || !CJK.test(t)) return;          // cheap reject: no Chinese, no work
+    if (!t) return;
+    // cheap reject: nothing this dictionary can match
+    if (!CJK.test(t) && !(ASCII_RE && ASCII_RE.test(t))) return;
     if (shouldSkip(n)) return;
     var out = t.replace(RE, function (m) { return DICT[m]; });
     if (out !== t) { n.nodeValue = out; processed++; }
@@ -92,8 +102,26 @@
     if (pending.length && !queued) { queued = true; requestAnimationFrame(flush); }
   });
 
+  // Appends window.NEKO_BUILD to the version button (index.html sets it via
+  // innerHTML on #changelog_button). Done here rather than by editing
+  // game_version.js so no upstream file is touched -- and unlike a dictionary
+  // entry keyed to a literal version string, this keeps working after btly0711
+  // bumps the upstream version.
+  var stamped = false;
+  function stampBuild() {
+    if (stamped || !window.NEKO_BUILD) return;
+    var box = document.getElementById("changelog_button");
+    var link = box && box.children[0];
+    if (!link) return;
+    var base = (link.textContent || "").trim();
+    if (!base) return;
+    link.textContent = base + "." + window.NEKO_BUILD;
+    stamped = true;
+  }
+
   function start() {
     walk(document.body);
+    stampBuild();
     observer.observe(document.body, OPTS);
 
     window.NEKO_TL = {
