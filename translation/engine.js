@@ -129,6 +129,17 @@
       off: function () { observer.disconnect(); return "paused"; },
       on: function () { observer.observe(document.body, OPTS); return "running"; },
       stats: function () { return { entries: keys.length, replacements: processed }; },
+      stamp: stampBuild,
+      probe: function () {
+        var box = document.getElementById("changelog_button");
+        return {
+          build: window.NEKO_BUILD,
+          stamped: stamped,
+          found: !!box,
+          child: !!(box && box.children[0]),
+          text: box && box.children[0] ? box.children[0].textContent : null
+        };
+      },
       missing: function () {
         var it = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         var seen = {}, n, runs, i;
@@ -144,6 +155,12 @@
     };
 
     window.addEventListener("load", function () { stampBuild(); walk(document.body); });
+
+    var tries = 0;
+    var poll = setInterval(function () {
+      stampBuild();
+      if (stamped || ++tries > 40) clearInterval(poll);
+    }, 250);
 
     console.log("[NEKO_TL] active -", keys.length, "entries. NEKO_TL.missing() to find gaps.");
   }
