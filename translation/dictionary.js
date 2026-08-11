@@ -11,7 +11,7 @@
 // Build number shown on the version button (e.g. V3.32b.1).
 // Bump this every time you push, so you can see at a glance whether
 // GitHub Pages has actually served your latest commit.
-window.NEKO_BUILD = "4";
+window.NEKO_BUILD = "8";
 
 window.NEKO_DICT = {
   "水火元素纵横交错而成的领域。水帘之间，一袭布裙如同仙子临凡，出云之姿风华绝代；火焰灼烧，暗藏杀机凌厉，剑锋所向，斩断天际，月落星沉！。": "A Domain woven from crisscrossing water and fire. Between the water curtains, a cloth dress descends like an immortal come to earth, her cloud-parting form peerless in grace; the flames burn, hiding a keen killing intent, and where the blade points it cleaves the horizon — the moon falls and the stars sink!",
