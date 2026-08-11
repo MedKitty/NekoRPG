@@ -11,7 +11,7 @@
 // Build number shown on the version button (e.g. V3.32b.1).
 // Bump this every time you push, so you can see at a glance whether
 // GitHub Pages has actually served your latest commit.
-window.NEKO_BUILD = "5";
+window.NEKO_BUILD = "6";
 
 window.NEKO_DICT = {
   "警告：反应堆温度达到9999°C时会熔毁,摧毁其中的一切.": "WARNING: the reactor melts down at 9999°C, destroying everything inside.",
