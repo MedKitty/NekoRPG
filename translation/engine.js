@@ -40,7 +40,16 @@
   // display.js:1101 does parseInt on .item_count innerText to read stack sizes.
   // Counts are digits so the dictionary cannot match them, but excluding the
   // class outright means a future dictionary entry can never break inventory.
-  var SKIP_CLASSES = ["item_count"];
+  //
+  // "bestiary_entry_name" is critical. index.html reads the enemy/zone name
+  // straight back out of the DOM on hover:
+  //     let current_enemy = hovered_element.children[0].innerHTML;   (:2059)
+  //     let current_level = hovered_element.children[0].innerHTML;   (:2095)
+  // and then does enemy_templates[current_enemy]. If we have rewritten that
+  // text, the lookup returns undefined and reading .description throws, which
+  // aborts tooltip construction -- the tooltip silently never opens. Both the
+  // bestiary list and the zone guide use this same class.
+  var SKIP_CLASSES = ["item_count", "bestiary_entry_name"];
 
   var processed = 0;
 
@@ -126,7 +135,10 @@
     observer.observe(document.body, OPTS);
 
     window.NEKO_TL = {
-      off: function () { observer.disconnect(); return "paused"; },
+      off: function () {
+        observer.disconnect();
+        return "paused (already-substituted text stays English until reload)";
+      },
       on: function () { observer.observe(document.body, OPTS); return "running"; },
       stats: function () { return { entries: keys.length, replacements: processed }; },
       stamp: stampBuild,
