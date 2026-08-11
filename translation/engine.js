@@ -40,16 +40,54 @@
   // display.js:1101 does parseInt on .item_count innerText to read stack sizes.
   // Counts are digits so the dictionary cannot match them, but excluding the
   // class outright means a future dictionary entry can never break inventory.
-  //
-  // "bestiary_entry_name" is critical. index.html reads the enemy/zone name
-  // straight back out of the DOM on hover:
+  var SKIP_CLASSES = ["item_count"];
+
+  // ---- name shield -------------------------------------------------------
+  // index.html reads these elements straight back out of the DOM on hover:
   //     let current_enemy = hovered_element.children[0].innerHTML;   (:2059)
   //     let current_level = hovered_element.children[0].innerHTML;   (:2095)
-  // and then does enemy_templates[current_enemy]. If we have rewritten that
-  // text, the lookup returns undefined and reading .description throws, which
-  // aborts tooltip construction -- the tooltip silently never opens. Both the
-  // bestiary list and the zone guide use this same class.
-  var SKIP_CLASSES = ["item_count", "bestiary_entry_name"];
+  // and feeds the result to enemy_templates[...] / the zone lookup. Translate
+  // that text naively and the lookup misses, reading .description throws, and
+  // the tooltip silently never opens.
+  //
+  // Rather than leave these untranslated, translate what is *displayed* and
+  // pin an own `innerHTML` property that still reports the original Chinese.
+  // The game reads back exactly the bytes it wrote -- including the <b> and
+  // "-" markers its own guard clauses test for -- while the player sees
+  // English. Own properties shadow Element.prototype, so this is scoped to
+  // these elements alone and nothing else on the page changes behaviour.
+  var NAME_CLASS = "bestiary_entry_name";
+  var shielded = typeof WeakSet === "function" ? new WeakSet() : null;
+  var htmlDesc = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+
+  function pin(el) {
+    var original = htmlDesc.get.call(el);
+    Object.defineProperty(el, "innerHTML", {
+      configurable: true,
+      get: function () { return original; },
+      set: function (v) {
+        original = v;              // game rewrote it -- track the new original
+        htmlDesc.set.call(this, v);
+        walk(this);                // ...then re-translate what it just painted
+      }
+    });
+  }
+
+  function shieldNames(root) {
+    if (!root || root.nodeType !== 1) return;
+    if (!htmlDesc || !htmlDesc.get || !htmlDesc.set) return;   // ancient browser
+    var list = [];
+    if (root.classList && root.classList.contains(NAME_CLASS)) list.push(root);
+    if (root.querySelectorAll) {
+      var f = root.querySelectorAll("." + NAME_CLASS);
+      for (var i = 0; i < f.length; i++) list.push(f[i]);
+    }
+    for (var j = 0; j < list.length; j++) {
+      if (shielded && shielded.has(list[j])) continue;
+      if (shielded) shielded.add(list[j]);
+      pin(list[j]);                // capture the original BEFORE any walk()
+    }
+  }
 
   var processed = 0;
 
@@ -95,7 +133,7 @@
     queued = false;
     observer.disconnect();
     try {
-      for (var i = 0; i < pending.length; i++) walk(pending[i]);
+      for (var i = 0; i < pending.length; i++) { shieldNames(pending[i]); walk(pending[i]); }
       stampBuild();
     } finally {
       pending.length = 0;
@@ -130,6 +168,7 @@
   }
 
   function start() {
+    shieldNames(document.body);
     walk(document.body);
     stampBuild();
     observer.observe(document.body, OPTS);
@@ -166,7 +205,9 @@
       }
     };
 
-    window.addEventListener("load", function () { stampBuild(); walk(document.body); });
+    window.addEventListener("load", function () {
+      stampBuild(); shieldNames(document.body); walk(document.body);
+    });
 
     var tries = 0;
     var poll = setInterval(function () {
